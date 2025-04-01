@@ -32,7 +32,6 @@ func SaveTool(dir string, name string, t *llm_models.Tool) (string, error) {
 
 func CreateDef(f interface{}) (*llm_models.Tool, error) {
 	funcType := reflect.TypeOf(f)
-
 	if funcType.Kind() == reflect.Func {
 		return createFuncDef(f)
 	}
@@ -52,8 +51,12 @@ func CreateStruct(obj interface{}) (*llm_models.Tool, error) {
 	if objType.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("CreateStruct expects a struct or pointer to a struct")
 	}
+	m := getStructMetadata(objType)
 	structName := objType.Name()
 	structDesc := structName + " defines a " + strings.ToLower(structName) + " object"
+	if m != nil {
+		structDesc = m.structComment
+	}
 	def := jsonschema.Definition{
 		Type:       jsonschema.Object,
 		Properties: make(map[string]jsonschema.Definition),
@@ -74,7 +77,12 @@ func CreateStruct(obj interface{}) (*llm_models.Tool, error) {
 		// Extract field description from struct tag or comments (if available)
 		fieldDesc := field.Tag.Get("desc")
 		if fieldDesc == "" {
-			fieldDesc = fieldName // Fallback to field name if no JSON tag is provided
+			fieldDesc = "n/a" // Fallback to field name if no JSON tag is provided
+		}
+		if m != nil {
+			if v, found := m.paramComment[fieldName]; found {
+				fieldDesc = v
+			}
 		}
 		jTag := field.Tag.Get("json")
 
@@ -90,7 +98,7 @@ func CreateStruct(obj interface{}) (*llm_models.Tool, error) {
 			}
 
 			// Add nested struct definition to the properties
-			def.Properties[fieldName] = nestedDef.Function.Parameters.(jsonschema.Definition)
+			def.Properties[fieldName] = nestedDef.Function.Parameters
 		} else if fieldType.Kind() == reflect.Slice || fieldType.Kind() == reflect.Array {
 			// Check if the array/slice is of structs
 			elemType := fieldType.Elem()
@@ -101,7 +109,7 @@ func CreateStruct(obj interface{}) (*llm_models.Tool, error) {
 					return nil, fmt.Errorf("error creating nested struct definition for array/slice element in field %s: %w", fieldName, err)
 				}
 
-				d := nestedDef.Function.Parameters.(jsonschema.Definition)
+				d := nestedDef.Function.Parameters
 				// Add array/slice of structs to the properties
 				def.Properties[fieldName] = jsonschema.Definition{
 					Type:        jsonschema.Array,

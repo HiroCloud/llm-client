@@ -1,8 +1,6 @@
 package tools
 
 import (
-	"errors"
-	"fmt"
 	"github.com/HiroCloud/llm-client/llm_models"
 	"github.com/Hirocloud/mcp-go/mcp"
 	"github.com/sashabaranov/go-openai/jsonschema"
@@ -10,10 +8,8 @@ import (
 
 // GetToolMCP converts an llm_models.Tool object into a mcp.Tool object with configured options based on its definition.
 func GetToolMCP(t *llm_models.Tool) (*mcp.Tool, error) {
-	def, ok := t.Function.Parameters.(jsonschema.Definition)
-	if !ok {
-		return nil, errors.New("invalid jsonschema definition")
-	}
+	def := t.Function.Parameters
+
 	options, err := getMCPToolOptions(t, def)
 	if err != nil {
 		return nil, err
@@ -115,7 +111,7 @@ func getMCPToolOptions(t *llm_models.Tool, def jsonschema.Definition) ([]mcp.Too
 		case jsonschema.Null:
 			fallthrough
 		default:
-			return nil, fmt.Errorf("invalid property type: %s", v.Type)
+			continue
 		}
 
 		options = append(options, option)

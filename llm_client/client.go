@@ -11,5 +11,5 @@ type LLM interface {
 	AddTool(tool llm_models.Tool)
 
 	Stream(ctx context.Context)
-	Generate(ctx context.Context, modelType llm_models.ModelType, message *llm_models.Message)
+	Generate(ctx context.Context, config *llm_models.ModelRequestConfig, message *llm_models.Message) (*llm_models.Response, error)
 }

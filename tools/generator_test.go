@@ -77,6 +77,8 @@ func TestCreateDef(t *testing.T) {
 			output, err := SaveTool("toolsjson/", "", d)
 			require.NoError(t, err)
 			assert.Equal(t, output, "toolsjson/"+d.Function.Name+".json")
+			_, err = NewToolFromFile(tc.Func, output)
+			require.NoError(t, err)
 		})
 	}
 }
