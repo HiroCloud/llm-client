@@ -8,6 +8,12 @@
 - Call Tools dynamically
 - MCP support, based on [MCP-GO](https://github.com/mark3labs/mcp-go)
 
+### Install
+```bash
+go get github.com/HiroCloud/llm-client
+```
+
+
 
 ### Generate
 
@@ -39,6 +45,9 @@ func main() {
     panic(err)
   }
   fmt.Printf("saved tool: %s", output)
+  
+  // NOTE: Always load data from a file createDef only works when running locally
+  _,_ = tools.NewToolFromFile(Person{},output)
 }
 
 ```
